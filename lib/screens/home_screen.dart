@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/paper.dart';
 import 'paper_detail_screen.dart';
 
@@ -55,10 +54,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Paper Name'),
-        content: SizedBox(
-          width: kIsWeb ? 400 : null,
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        return AlertDialog(
+          title: const Text('Edit Paper Name'),
+          content: SizedBox(
+            width: screenWidth > 600 ? 400 : null,
           child: TextField(
             controller: titleController,
             decoration: const InputDecoration(
@@ -104,17 +105,20 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text('Save'),
           ),
         ],
-      ),
+        );
+      },
     );
   }
 
   void _showAddPaperDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Paper'),
-        content: SizedBox(
-          width: kIsWeb ? 400 : null,
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        return AlertDialog(
+          title: const Text('Add Paper'),
+          content: SizedBox(
+            width: screenWidth > 600 ? 400 : null,
           child: TextField(
             controller: _titleController,
             decoration: const InputDecoration(
@@ -138,29 +142,33 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Text('Add'),
           ),
         ],
-      ),
+        );
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
     final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
     final isLargeScreen = screenWidth > 600;
     final crossAxisCount = isLargeScreen ? (screenWidth > 1200 ? 3 : 2) : 1;
     final childAspectRatio = isLargeScreen ? 1.5 : 1.1;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Papers',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isMobile ? 18 : 20,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 2,
       ),
       body: Container(
-        padding: EdgeInsets.all(isWeb ? 24 : 8),
+        padding: EdgeInsets.all(isMobile ? 8 : 24),
         child: StreamBuilder<QuerySnapshot>(
           stream: _firestore
               .collection('papers')
@@ -170,19 +178,19 @@ class _HomeScreenState extends State<HomeScreen> {
             if (snapshot.hasError) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(isMobile ? 16 : 24),
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: EdgeInsets.all(isMobile ? 16 : 24),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.error_outline,
-                              size: 64, color: Colors.red),
-                          const SizedBox(height: 16),
+                          Icon(Icons.error_outline,
+                              size: isMobile ? 48 : 64, color: Colors.red),
+                          SizedBox(height: isMobile ? 12 : 16),
                           Text(
                             'Error: ${snapshot.error}',
-                            style: const TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: isMobile ? 14 : 16),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -205,23 +213,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.description,
-                          size: isWeb ? 96 : 64, color: Colors.grey.shade400),
-                      const SizedBox(height: 24),
+                          size: isMobile ? 48 : 96, color: Colors.grey.shade400),
+                      SizedBox(height: isMobile ? 16 : 24),
                       Text(
                         'No papers yet',
                         style: TextStyle(
-                          fontSize: isWeb ? 24 : 18,
+                          fontSize: isMobile ? 16 : 24,
                           color: Colors.grey.shade600,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: isMobile ? 4 : 8),
                       Text(
-                        isWeb
-                            ? 'Click the + button to add a paper'
-                            : 'Tap the + button to add a paper',
+                        isMobile
+                            ? 'Tap the + button to add a paper'
+                            : 'Click the + button to add a paper',
                         style: TextStyle(
-                          fontSize: isWeb ? 16 : 14,
+                          fontSize: isMobile ? 12 : 16,
                           color: Colors.grey.shade500,
                         ),
                       ),
@@ -247,17 +255,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 itemCount: papers.length,
                 itemBuilder: (context, index) {
                   final paper = papers[index];
-                  return _buildPaperCard(context, paper, isWeb);
+                  return _buildPaperCard(context, paper, isMobile);
                 },
               );
             } else {
               return ListView.builder(
                 itemCount: papers.length,
-                itemBuilder: (context, index) {
+                    itemBuilder: (context, index) {
                   final paper = papers[index];
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildPaperCard(context, paper, isWeb),
+                    padding: EdgeInsets.only(bottom: isMobile ? 8 : 12),
+                    child: _buildPaperCard(context, paper, isMobile),
                   );
                 },
               );
@@ -265,16 +273,22 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddPaperDialog,
-        tooltip: 'Add Paper',
-        icon: const Icon(Icons.add),
-        label: Text(isWeb ? 'Add Paper' : ''),
-      ),
+      floatingActionButton: isMobile
+          ? FloatingActionButton(
+              onPressed: _showAddPaperDialog,
+              tooltip: 'Add Paper',
+              child: const Icon(Icons.add),
+            )
+          : FloatingActionButton.extended(
+              onPressed: _showAddPaperDialog,
+              tooltip: 'Add Paper',
+              icon: const Icon(Icons.add),
+              label: const Text('Add Paper'),
+            ),
     );
   }
 
-  Widget _buildPaperCard(BuildContext context, Paper paper, bool isWeb) {
+  Widget _buildPaperCard(BuildContext context, Paper paper, bool isMobile) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -291,15 +305,15 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(isWeb ? 20 : 16),
+          padding: EdgeInsets.all(isMobile ? 12 : 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: EdgeInsets.all(isMobile ? 8 : 12),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primaryContainer,
                       borderRadius: BorderRadius.circular(8),
@@ -307,12 +321,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Icon(
                       Icons.description,
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      size: isWeb ? 32 : 24,
+                      size: isMobile ? 20 : 32,
                     ),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    icon: Icon(Icons.edit, color: Colors.blue, size: isMobile ? 18 : 24),
                     onPressed: () => _editPaper(paper),
                     tooltip: 'Edit Paper Name',
                     padding: EdgeInsets.zero,
@@ -320,47 +334,40 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      paper.title,
-                      style: TextStyle(
-                        fontSize: isWeb ? 20 : 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Created: ${paper.createdAt.day}/${paper.createdAt.month}/${paper.createdAt.year}',
-                      style: TextStyle(
-                        fontSize: isWeb ? 14 : 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
+              SizedBox(height: isMobile ? 12 : 16),
+              Text(
+                paper.title,
+                style: TextStyle(
+                  fontSize: isMobile ? 16 : 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: isMobile ? 4 : 8),
+              Text(
+                'Created: ${paper.createdAt.day}/${paper.createdAt.month}/${paper.createdAt.year}',
+                style: TextStyle(
+                  fontSize: isMobile ? 11 : 14,
+                  color: Colors.grey.shade600,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: isMobile ? 8 : 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
                     'View Questions',
                     style: TextStyle(
-                      fontSize: isWeb ? 14 : 12,
+                      fontSize: isMobile ? 11 : 14,
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  SizedBox(width: isMobile ? 2 : 4),
                   Icon(
                     Icons.arrow_forward_ios,
-                    size: isWeb ? 16 : 14,
+                    size: isMobile ? 12 : 16,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ],

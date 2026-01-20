@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/paper.dart';
 import '../models/question.dart';
 import 'add_question_screen.dart';
@@ -37,10 +36,12 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
 
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Paper Name'),
-        content: SizedBox(
-          width: kIsWeb ? 400 : null,
+      builder: (context) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        return AlertDialog(
+          title: const Text('Edit Paper Name'),
+          content: SizedBox(
+            width: screenWidth > 600 ? 400 : null,
           child: TextField(
             controller: titleController,
             decoration: const InputDecoration(
@@ -86,7 +87,8 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
             child: const Text('Save'),
           ),
         ],
-      ),
+        );
+      },
     );
   }
 
@@ -109,27 +111,30 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
     final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           _currentPaper.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isMobile ? 18 : 20,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 2,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: Icon(Icons.edit, size: isMobile ? 20 : 24),
             onPressed: _editPaperName,
             tooltip: 'Edit Paper Name',
           ),
         ],
       ),
       body: Container(
-        padding: EdgeInsets.all(isWeb ? 24 : 8),
+        padding: EdgeInsets.all(isMobile ? 8 : 24),
         child: StreamBuilder<QuerySnapshot>(
           stream: _firestore
               .collection('questions')
@@ -140,19 +145,19 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
             if (snapshot.hasError) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.all(isMobile ? 16 : 24),
                   child: Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: EdgeInsets.all(isMobile ? 16 : 24),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.error_outline,
-                              size: 64, color: Colors.red),
-                          const SizedBox(height: 16),
+                          Icon(Icons.error_outline,
+                              size: isMobile ? 48 : 64, color: Colors.red),
+                          SizedBox(height: isMobile ? 12 : 16),
                           Text(
                             'Error: ${snapshot.error}',
-                            style: const TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: isMobile ? 14 : 16),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -175,23 +180,23 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.quiz,
-                          size: isWeb ? 96 : 64, color: Colors.grey.shade400),
-                      const SizedBox(height: 24),
+                          size: isMobile ? 48 : 96, color: Colors.grey.shade400),
+                      SizedBox(height: isMobile ? 16 : 24),
                       Text(
                         'No questions yet',
                         style: TextStyle(
-                          fontSize: isWeb ? 24 : 18,
+                          fontSize: isMobile ? 16 : 24,
                           color: Colors.grey.shade600,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: isMobile ? 4 : 8),
                       Text(
-                        isWeb
-                            ? 'Click the + button to add a question'
-                            : 'Tap the + button to add a question',
+                        isMobile
+                            ? 'Tap the + button to add a question'
+                            : 'Click the + button to add a question',
                         style: TextStyle(
-                          fontSize: isWeb ? 16 : 14,
+                          fontSize: isMobile ? 12 : 16,
                           color: Colors.grey.shade500,
                         ),
                       ),
@@ -213,33 +218,46 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
               itemBuilder: (context, index) {
                 final question = questions[index];
                 return Padding(
-                  padding: EdgeInsets.only(bottom: isWeb ? 16 : 12),
-                  child: _buildQuestionCard(context, question, index, isWeb, screenWidth),
+                  padding: EdgeInsets.only(bottom: isMobile ? 8 : 16),
+                  child: _buildQuestionCard(context, question, index, isMobile, screenWidth),
                 );
               },
             );
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddQuestionScreen(paperId: _currentPaper.id),
+      floatingActionButton: isMobile
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddQuestionScreen(paperId: _currentPaper.id),
+                  ),
+                );
+              },
+              tooltip: 'Add Question',
+              child: const Icon(Icons.add),
+            )
+          : FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddQuestionScreen(paperId: _currentPaper.id),
+                  ),
+                );
+              },
+              tooltip: 'Add Question',
+              icon: const Icon(Icons.add),
+              label: const Text('Add Question'),
             ),
-          );
-        },
-        tooltip: 'Add Question',
-        icon: const Icon(Icons.add),
-        label: Text(isWeb ? 'Add Question' : ''),
-      ),
     );
   }
 
   Widget _buildQuestionCard(
-      BuildContext context, Question question, int index, bool isWeb, double screenWidth) {
-    final maxWidth = screenWidth > 800 ? 800.0 : screenWidth - (isWeb ? 48 : 16);
+      BuildContext context, Question question, int index, bool isMobile, double screenWidth) {
+    final maxWidth = screenWidth > 800 ? 800.0 : screenWidth - (isMobile ? 16 : 48);
 
     return Center(
       child: ConstrainedBox(
@@ -250,7 +268,7 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(
-            padding: EdgeInsets.all(isWeb ? 20 : 16),
+            padding: EdgeInsets.all(isMobile ? 12 : 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -259,17 +277,17 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
                   children: [
                     CircleAvatar(
                       backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                      radius: isWeb ? 24 : 20,
+                      radius: isMobile ? 16 : 24,
                       child: Text(
                         '${index + 1}',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: isWeb ? 18 : 16,
+                          fontSize: isMobile ? 14 : 18,
                           color: Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    SizedBox(width: isMobile ? 12 : 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,17 +295,17 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
                           Text(
                             question.questionText,
                             style: TextStyle(
-                              fontSize: isWeb ? 18 : 16,
+                              fontSize: isMobile ? 14 : 18,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: isMobile ? 12 : 16),
                           ...question.options.asMap().entries.map((entry) {
                             final isCorrect = entry.key == question.correctAnswerIndex;
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
+                              padding: EdgeInsets.only(bottom: isMobile ? 6 : 8),
                               child: Container(
-                                padding: const EdgeInsets.all(12),
+                                padding: EdgeInsets.all(isMobile ? 8 : 12),
                                 decoration: BoxDecoration(
                                   color: isCorrect
                                       ? Colors.green.shade50
@@ -306,17 +324,17 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
                                       isCorrect
                                           ? Icons.check_circle
                                           : Icons.radio_button_unchecked,
-                                      size: isWeb ? 20 : 18,
+                                      size: isMobile ? 16 : 20,
                                       color: isCorrect ? Colors.green : Colors.grey,
                                     ),
-                                    const SizedBox(width: 12),
+                                    SizedBox(width: isMobile ? 8 : 12),
                                     Expanded(
                                       child: Text(
                                         '${String.fromCharCode(65 + entry.key)}. ${entry.value}',
                                         style: TextStyle(
                                           fontWeight:
                                               isCorrect ? FontWeight.bold : FontWeight.normal,
-                                          fontSize: isWeb ? 16 : 14,
+                                          fontSize: isMobile ? 12 : 16,
                                           color: isCorrect
                                               ? Colors.green.shade900
                                               : Colors.black87,
@@ -335,7 +353,7 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
                     Column(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          icon: Icon(Icons.edit, color: Colors.blue, size: isMobile ? 20 : 24),
                           onPressed: () {
                             Navigator.push(
                               context,
@@ -350,7 +368,7 @@ class _PaperDetailScreenState extends State<PaperDetailScreen> {
                           tooltip: 'Edit Question',
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
+                          icon: Icon(Icons.delete, color: Colors.red, size: isMobile ? 20 : 24),
                           onPressed: () {
                             showDialog(
                               context: context,

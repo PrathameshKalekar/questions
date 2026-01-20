@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../models/question.dart';
 
 class AddQuestionScreen extends StatefulWidget {
@@ -166,22 +165,25 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = kIsWeb;
     final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
     final maxWidth = screenWidth > 800 ? 700.0 : screenWidth;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.question != null ? 'Edit Question' : 'Add Question',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: isMobile ? 18 : 20,
+          ),
         ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         elevation: 2,
       ),
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(isWeb ? 32 : 16),
+          padding: EdgeInsets.all(isMobile ? 12 : 32),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxWidth),
             child: Column(
@@ -201,18 +203,27 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Answer Options',
-                      style: TextStyle(
-                        fontSize: isWeb ? 20 : 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                Text(
+                  'Answer Options',
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _addOption,
+                  icon: Icon(Icons.add, size: isMobile ? 18 : 24),
+                  label: Text(
+                    'Add Option',
+                    style: TextStyle(fontSize: isMobile ? 12 : 14),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 12 : 16,
+                      vertical: isMobile ? 8 : 12,
                     ),
-                    ElevatedButton.icon(
-                      onPressed: _addOption,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Option'),
-                    ),
+                  ),
+                ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -220,11 +231,11 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                   final index = entry.key;
                   final controller = entry.value;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: EdgeInsets.only(bottom: isMobile ? 12 : 16),
                     child: Card(
                       elevation: 1,
                       child: Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: EdgeInsets.all(isMobile ? 8 : 12),
                         child: Row(
                           children: [
                             Radio<int>(
@@ -244,9 +255,14 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                                   labelText: 'Option ${String.fromCharCode(65 + index)}',
                                   hintText: 'Enter option text',
                                   border: const OutlineInputBorder(),
+                                  isDense: isMobile,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: isMobile ? 12 : 16,
+                                    vertical: isMobile ? 12 : 16,
+                                  ),
                                   prefixIcon: Icon(
                                     Icons.radio_button_checked,
-                                    size: 20,
+                                    size: isMobile ? 18 : 20,
                                     color: _correctAnswerIndex == index
                                         ? Colors.green
                                         : Colors.grey,
@@ -269,7 +285,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 }),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(isMobile ? 12 : 16),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(12),
@@ -278,14 +294,14 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                   child: Row(
                     children: [
                       Icon(Icons.info_outline,
-                          color: Colors.blue.shade700, size: isWeb ? 28 : 24),
-                      const SizedBox(width: 12),
+                          color: Colors.blue.shade700, size: isMobile ? 20 : 28),
+                      SizedBox(width: isMobile ? 8 : 12),
                       Expanded(
                         child: Text(
                           'Select the radio button next to the correct answer',
                           style: TextStyle(
                             color: Colors.blue.shade900,
-                            fontSize: isWeb ? 15 : 14,
+                            fontSize: isMobile ? 12 : 15,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -297,14 +313,14 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 ElevatedButton(
                   onPressed: _saveQuestion,
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: isWeb ? 18 : 16),
+                    padding: EdgeInsets.symmetric(vertical: isMobile ? 14 : 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: Text(
                     widget.question != null ? 'Update Question' : 'Save Question',
-                    style: TextStyle(fontSize: isWeb ? 17 : 16),
+                    style: TextStyle(fontSize: isMobile ? 14 : 17),
                   ),
                 ),
               ],
